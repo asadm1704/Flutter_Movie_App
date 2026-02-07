@@ -41,29 +41,95 @@ class ApiService {
     }
   }
 
-  /// Fetch a curated list of trending/popular movies
-  /// OMDb doesn't have a "trending" endpoint, so we search popular keywords
-  Future<List<Movie>> getTrendingMovies() async {
-    final trendingSearches = [
-      'Avengers',
-      'Batman',
-      'Spider',
-      'Star Wars',
-      'John Wick',
-      'Fast Furious',
-      'Inception',
-      'Interstellar',
-      'Oppenheimer',
-      'Dune',
-    ];
+  /// Fetch IMDb rating for a single movie by its ID
+  Future<String> _fetchRating(String imdbId) async {
+    try {
+      final url = Uri.parse('$_baseUrl?i=$imdbId&apikey=$_apiKey');
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['Response'] == 'True') {
+          return data['imdbRating'] ?? 'N/A';
+        }
+      }
+    } catch (_) {}
+    return 'N/A';
+  }
 
+  /// Initial trending search terms
+  static const List<String> _trendingSearches = [
+    'Avengers',
+    'Batman',
+    'Spider',
+    'Star Wars',
+    'John Wick',
+    'Fast Furious',
+    'Inception',
+    'Interstellar',
+    'Oppenheimer',
+    'Dune',
+  ];
+
+  /// Additional search terms for "Explore More"
+  static const List<String> _exploreSearches = [
+    'Matrix',
+    'Gladiator',
+    'Titanic',
+    'Joker',
+    'Deadpool',
+    'Mission Impossible',
+    'Harry Potter',
+    'Lord Rings',
+    'Jurassic',
+    'Transformers',
+    'Pirates Caribbean',
+    'Iron Man',
+    'Thor',
+    'Guardians Galaxy',
+    'Black Panther',
+  ];
+
+  int _exploreIndex = 0;
+
+  /// Reset explore index (call when refreshing)
+  void resetExplore() {
+    _exploreIndex = 0;
+  }
+
+  /// Fetch a curated list of trending/popular movies with ratings
+  Future<List<Movie>> getTrendingMovies() async {
+    _exploreIndex = 0;
+    return _fetchMoviesFromSearches(_trendingSearches);
+  }
+
+  /// Load more movies for the "Explore More" feature
+  Future<List<Movie>> loadMoreMovies() async {
+    const batchSize = 5;
+    final start = _exploreIndex;
+    final end = (_exploreIndex + batchSize).clamp(0, _exploreSearches.length);
+
+    if (start >= _exploreSearches.length) {
+      return []; // No more to load
+    }
+
+    final searches = _exploreSearches.sublist(start, end);
+    _exploreIndex = end;
+    return _fetchMoviesFromSearches(searches);
+  }
+
+  /// Whether there are more movies available to explore
+  bool get hasMoreToExplore => _exploreIndex < _exploreSearches.length;
+
+  Future<List<Movie>> _fetchMoviesFromSearches(List<String> searches) async {
     List<Movie> allMovies = [];
 
-    for (final query in trendingSearches) {
+    for (final query in searches) {
       try {
         final movies = await searchMovies(query);
         if (movies.isNotEmpty) {
-          allMovies.add(movies.first);
+          final movie = movies.first;
+          final rating = await _fetchRating(movie.imdbId);
+          allMovies.add(movie.copyWith(imdbRating: rating));
         }
       } catch (_) {
         // Skip failed searches
