@@ -5,9 +5,13 @@ A beautiful Flutter movie application that lets you browse trending movies, sear
 ## Features
 
 - **Trending Movies** — Curated list of popular movies displayed on the home screen
+- **Smart Search with Filter Chips** — Tap the search bar to reveal quick filter categories:
+  - Top Rated, Latest 2025, Action, Comedy, Sci-Fi, Horror, Romance, Thriller
+  - Each filter fetches movies in that category with IMDb ratings
+  - Active filter is highlighted for quick reference
 - **Search** — Search any movie by title with instant results
-- **IMDb Ratings** — View IMDb ratings alongside each movie card
-- **Explore More** — Load additional movies with a single tap
+- **IMDb Ratings** — View IMDb ratings alongside the year on every movie card
+- **Explore More** — Load additional movies with a single tap at the bottom of the list
 - **Movie Details** — Full movie info including:
   - Poster, Title, Year, Runtime, Rated
   - Genre tags
