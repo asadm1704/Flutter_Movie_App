@@ -1,30 +1,31 @@
-# 🎬 Flutter Movie App
+# Flutter Movie App
 
 A beautiful Flutter movie application that lets you browse trending movies, search for any movie, and view detailed information including IMDb ratings — all powered by the [OMDb API](http://www.omdbapi.com/).
 
-## ✨ Features
+## Features
 
-- **🔥 Trending Movies** — Curated list of popular movies displayed on the home screen
-- **🔍 Search** — Search any movie by title with instant results
-- **⭐ IMDb Ratings** — View IMDb ratings with a sleek gold badge
-- **🎬 Movie Details** — Full movie info including:
+- **Trending Movies** — Curated list of popular movies displayed on the home screen
+- **Search** — Search any movie by title with instant results
+- **IMDb Ratings** — View IMDb ratings alongside each movie card
+- **Explore More** — Load additional movies with a single tap
+- **Movie Details** — Full movie info including:
   - Poster, Title, Year, Runtime, Rated
   - Genre tags
   - Full plot description
   - Director, Writers, Actors
   - Awards, Box Office, Language, Country
   - IMDb Votes
-- **🌙 Dark Theme** — Modern dark UI with amber accents
-- **📱 Pull to Refresh** — Pull down to refresh the trending movies list
-- **↻ Smooth Navigation** — Tap any movie card to see its full details with a hero-style poster
+- **Dark Theme** — Modern dark UI with amber accents
+- **Pull to Refresh** — Pull down to refresh the trending movies list
+- **Smooth Navigation** — Tap any movie card to see its full details with a hero-style poster
 
-## 📸 Screenshots
+## Screenshots
 
 | Home Screen | Movie Detail |
 |:-----------:|:------------:|
 | Trending movies list with search | Full movie info with poster |
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 lib/
@@ -38,7 +39,7 @@ lib/
     └── movie_detail_screen.dart # Detailed movie information screen
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -71,14 +72,14 @@ lib/
    flutter run
    ```
 
-## 📦 Dependencies
+## Dependencies
 
 | Package | Purpose |
 |---------|---------|
 | [`http`](https://pub.dev/packages/http) | Making HTTP requests to the OMDb API |
 | [`cupertino_icons`](https://pub.dev/packages/cupertino_icons) | iOS-style icons |
 
-## 🔑 API Configuration
+## API Configuration
 
 This app uses the [OMDb API](http://www.omdbapi.com/) to fetch movie data.
 
@@ -86,21 +87,21 @@ This app uses the [OMDb API](http://www.omdbapi.com/) to fetch movie data.
 2. **Activate** your key via the confirmation email
 3. Add the key in `lib/services/api_service.dart`
 
-## 🛠️ Built With
+## Built With
 
 - **Flutter** — UI framework
 - **Dart** — Programming language
 - **OMDb API** — Movie data provider
 - **Material Design 3** — Design system
 
-## 📄 License
+## License
 
 This project is open source and available under the [MIT License](LICENSE).
 
-## 🤝 Contributing
+## Contributing
 
 Contributions, issues, and feature requests are welcome! Feel free to open an issue or submit a pull request.
 
 ---
 
-Made with ❤️ using Flutter
+Made with Flutter
