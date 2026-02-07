@@ -18,6 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Movie> _searchResults = [];
   bool _isLoading = true;
   bool _isSearching = false;
+  bool _isLoadingMore = false;
   String? _error;
 
   @override
@@ -74,6 +75,23 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _loadMoreMovies() async {
+    setState(() {
+      _isLoadingMore = true;
+    });
+    try {
+      final moreMovies = await _apiService.loadMoreMovies();
+      setState(() {
+        _trendingMovies.addAll(moreMovies);
+        _isLoadingMore = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingMore = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -88,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: const Color(0xFF1C1C2E),
       appBar: AppBar(
         title: const Text(
-          '🎬 Movie App',
+          'Movie App',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
         ),
         backgroundColor: const Color(0xFF1C1C2E),
@@ -137,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                _isSearching ? 'Search Results' : '🔥 Trending Movies',
+                _isSearching ? 'Search Results' : 'Trending Movies',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -190,9 +208,52 @@ class _HomeScreenState extends State<HomeScreen> {
                       onRefresh: _loadTrendingMovies,
                       child: ListView.builder(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: moviesToShow.length,
+                        itemCount: moviesToShow.length + (_isSearching ? 0 : 1),
                         itemBuilder: (context, index) {
-                          return _MovieCard(movie: moviesToShow[index]);
+                          if (index < moviesToShow.length) {
+                            return _MovieCard(movie: moviesToShow[index]);
+                          }
+                          // Explore More button
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 24, top: 8),
+                            child: Center(
+                              child: _isLoadingMore
+                                  ? const Padding(
+                                    padding: EdgeInsets.all(16),
+                                    child: CircularProgressIndicator(
+                                      color: Colors.amber,
+                                    ),
+                                  )
+                                  : _apiService.hasMoreToExplore
+                                      ? ElevatedButton.icon(
+                                        onPressed: _loadMoreMovies,
+                                        icon: const Icon(Icons.explore),
+                                        label: const Text('Explore More'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.amber,
+                                          foregroundColor: Colors.black,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 32,
+                                            vertical: 14,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                          ),
+                                          textStyle: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      )
+                                      : Text(
+                                        'You\'ve explored all movies!',
+                                        style: TextStyle(
+                                          color: Colors.grey[500],
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -306,6 +367,23 @@ class _MovieCard extends StatelessWidget {
                             fontSize: 14,
                           ),
                         ),
+                        const SizedBox(width: 12),
+                        if (movie.imdbRating != 'N/A') ...[
+                          const Icon(
+                            Icons.star,
+                            color: Colors.amber,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            movie.imdbRating,
+                            style: const TextStyle(
+                              color: Colors.amber,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                     const SizedBox(height: 4),
