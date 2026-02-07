@@ -13,17 +13,36 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ApiService _apiService = ApiService();
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   List<Movie> _trendingMovies = [];
   List<Movie> _searchResults = [];
   bool _isLoading = true;
   bool _isSearching = false;
   bool _isLoadingMore = false;
+  bool _showFilters = false;
+  String? _activeFilter;
   String? _error;
+
+  static const List<Map<String, dynamic>> _searchFilters = [
+    {'label': 'Top Rated', 'icon': Icons.star},
+    {'label': 'Latest 2025', 'icon': Icons.new_releases},
+    {'label': 'Action', 'icon': Icons.local_fire_department},
+    {'label': 'Comedy', 'icon': Icons.sentiment_very_satisfied},
+    {'label': 'Sci-Fi', 'icon': Icons.rocket_launch},
+    {'label': 'Horror', 'icon': Icons.visibility},
+    {'label': 'Romance', 'icon': Icons.favorite},
+    {'label': 'Thriller', 'icon': Icons.psychology},
+  ];
 
   @override
   void initState() {
     super.initState();
+    _searchFocusNode.addListener(() {
+      setState(() {
+        _showFilters = _searchFocusNode.hasFocus;
+      });
+    });
     _loadTrendingMovies();
   }
 
@@ -51,6 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _isSearching = false;
         _searchResults = [];
+        _activeFilter = null;
       });
       return;
     }
@@ -59,10 +79,46 @@ class _HomeScreenState extends State<HomeScreen> {
       _isSearching = true;
       _isLoading = true;
       _error = null;
+      _activeFilter = null;
+      _showFilters = false;
     });
+    _searchFocusNode.unfocus();
 
     try {
-      final movies = await _apiService.searchMovies(query);
+      final movies = await _apiService.searchMoviesWithRatings(query);
+      setState(() {
+        _searchResults = movies;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _searchByFilter(String category) async {
+    setState(() {
+      _isSearching = true;
+      _isLoading = true;
+      _error = null;
+      _activeFilter = category;
+      _showFilters = false;
+    });
+    _searchFocusNode.unfocus();
+    _searchController.text = category;
+
+    try {
+      final movies = await _apiService.searchByCategory(category);
+      // Sort by rating for "Top Rated"
+      if (category == 'Top Rated') {
+        movies.sort((a, b) {
+          final rA = double.tryParse(a.imdbRating) ?? 0;
+          final rB = double.tryParse(b.imdbRating) ?? 0;
+          return rB.compareTo(rA);
+        });
+      }
       setState(() {
         _searchResults = movies;
         _isLoading = false;
@@ -95,6 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -120,9 +177,10 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: TextField(
               controller: _searchController,
+              focusNode: _searchFocusNode,
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
-                hintText: 'Search movies...',
+                hintText: 'Search by title, rating, genre...',
                 hintStyle: TextStyle(color: Colors.grey[500]),
                 prefixIcon: const Icon(Icons.search, color: Colors.grey),
                 suffixIcon:
@@ -134,6 +192,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             setState(() {
                               _isSearching = false;
                               _searchResults = [];
+                              _activeFilter = null;
+                              _showFilters = false;
                             });
                           },
                         )
@@ -149,13 +209,59 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
+          // Filter Chips
+          if (_showFilters || _activeFilter != null)
+            SizedBox(
+              height: 50,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                itemCount: _searchFilters.length,
+                itemBuilder: (context, index) {
+                  final filter = _searchFilters[index];
+                  final isActive = _activeFilter == filter['label'];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: FilterChip(
+                      avatar: Icon(
+                        filter['icon'] as IconData,
+                        size: 16,
+                        color: isActive ? Colors.black : Colors.amber,
+                      ),
+                      label: Text(filter['label'] as String),
+                      labelStyle: TextStyle(
+                        color: isActive ? Colors.black : Colors.white,
+                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 13,
+                      ),
+                      selected: isActive,
+                      onSelected: (_) => _searchByFilter(filter['label'] as String),
+                      backgroundColor: const Color(0xFF2A2A3D),
+                      selectedColor: Colors.amber,
+                      checkmarkColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(
+                          color: isActive ? Colors.amber : Colors.grey[700]!,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+
           // Section Title
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                _isSearching ? 'Search Results' : 'Trending Movies',
+                _activeFilter != null
+                    ? _activeFilter!
+                    : _isSearching
+                        ? 'Search Results'
+                        : 'Trending Movies',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,

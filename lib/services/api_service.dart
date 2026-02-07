@@ -7,8 +7,11 @@ class ApiService {
   static const String _baseUrl = 'http://www.omdbapi.com/';
 
   /// Search movies by keyword
-  Future<List<Movie>> searchMovies(String query, {int page = 1}) async {
-    final url = Uri.parse('$_baseUrl?s=$query&page=$page&apikey=$_apiKey');
+  Future<List<Movie>> searchMovies(String query, {int page = 1, String? type, String? year}) async {
+    String urlStr = '$_baseUrl?s=$query&page=$page&apikey=$_apiKey';
+    if (type != null) urlStr += '&type=$type';
+    if (year != null) urlStr += '&y=$year';
+    final url = Uri.parse(urlStr);
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -22,6 +25,52 @@ class ApiService {
     } else {
       throw Exception('Failed to load movies');
     }
+  }
+
+  /// Search movies and fetch IMDb ratings for each result
+  Future<List<Movie>> searchMoviesWithRatings(String query, {String? type, String? year}) async {
+    final movies = await searchMovies(query, type: type, year: year);
+    List<Movie> moviesWithRatings = [];
+    for (final movie in movies) {
+      final rating = await _fetchRating(movie.imdbId);
+      moviesWithRatings.add(movie.copyWith(imdbRating: rating));
+    }
+    return moviesWithRatings;
+  }
+
+  /// Search by category (predefined popular queries per genre)
+  Future<List<Movie>> searchByCategory(String category) async {
+    final Map<String, String> categoryQueries = {
+      'Top Rated': 'dark knight',
+      'Latest 2025': 'movie',
+      'Action': 'action hero',
+      'Comedy': 'comedy fun',
+      'Sci-Fi': 'space future',
+      'Horror': 'horror night',
+      'Romance': 'love story',
+      'Thriller': 'thriller mystery',
+    };
+
+    final Map<String, String?> categoryTypes = {
+      'Top Rated': null,
+      'Latest 2025': null,
+      'Action': 'movie',
+      'Comedy': 'movie',
+      'Sci-Fi': 'movie',
+      'Horror': 'movie',
+      'Romance': 'movie',
+      'Thriller': 'movie',
+    };
+
+    final Map<String, String?> categoryYears = {
+      'Latest 2025': '2025',
+    };
+
+    final query = categoryQueries[category] ?? category;
+    final type = categoryTypes[category];
+    final year = categoryYears[category];
+
+    return searchMoviesWithRatings(query, type: type, year: year);
   }
 
   /// Get full movie details by IMDb ID
