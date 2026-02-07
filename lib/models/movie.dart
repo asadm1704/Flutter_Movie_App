@@ -4,6 +4,7 @@ class Movie {
   final String imdbId;
   final String type;
   final String poster;
+  final String imdbRating;
 
   Movie({
     required this.title,
@@ -11,6 +12,7 @@ class Movie {
     required this.imdbId,
     required this.type,
     required this.poster,
+    this.imdbRating = 'N/A',
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,18 @@ class Movie {
       imdbId: json['imdbID'] ?? '',
       type: json['Type'] ?? '',
       poster: json['Poster'] ?? 'N/A',
+      imdbRating: json['imdbRating'] ?? 'N/A',
+    );
+  }
+
+  Movie copyWith({String? imdbRating}) {
+    return Movie(
+      title: title,
+      year: year,
+      imdbId: imdbId,
+      type: type,
+      poster: poster,
+      imdbRating: imdbRating ?? this.imdbRating,
     );
   }
 }
